@@ -2,7 +2,7 @@ library(ggplot2)
 library(ggpubr)
 library(reshape2)
 
-source("libs/filereader.R")
+source("libs/multifilereader.R")
 source("libs/public_constants.R")
 
 # This file (analyzer.R) is for...
@@ -37,6 +37,7 @@ filter_data <- function(consolidated_data)
 
 
 # 2.1 Returns the dataframe with the subset of the data (by subset_name)
+# TODO: Add Totals where missing.
 # Args: subset_name: name of the subset for which the data has to be retrieved
 # Returns: dataframe containing the cleaned data subset
 get_subset_data <- function(subset_name)
@@ -79,6 +80,9 @@ get_subset_data <- function(subset_name)
 # Returns: data frame. cleaned_data, longified.
 get_clean_long_subset_data <- function(subset_data)
 {
+  # TODO: handle observations with NA (Currently throws warnings)
+  # Either: set NAs to some average value (of all/ of previous & next)
+  # Or: Delete observations across all variables for the year with an NA value
   for(a in 2:ncol(subset_data))
   {
     subset_data[,a] <- as.numeric(gsub(",","",subset_data[,a]))
@@ -88,6 +92,7 @@ get_clean_long_subset_data <- function(subset_data)
     dplyr::mutate(beginYr=strtoi(substring(Year,1,4)))
 
   subset_data <- melt(subset_data[,-1], id.vars = "beginYr")
+  
   subset_data$variable <- gsub("_",".",subset_data$variable)
   subset_data$variable <- gsub("\\."," ",subset_data$variable)
   
@@ -107,7 +112,7 @@ getSummary <- function(clean_long_subset_data)
   data_summary <- clean_long_subset_data %>% 
     group_by(variable) %>% 
     summarise(n = n(), mean=mean(value), median=median(value), 
-              sd=sd(value), min=min(value), max=max(value)) 
+              sd=sd(value), min=min(value), max=max(value))
   return(data_summary)
 }
 
@@ -120,30 +125,64 @@ getSummary <- function(clean_long_subset_data)
 # Args: String Title for the Plot (Default: Plot Title)
 # Args: boolean to use linear model 
 # Returns: ggplot object
-# TODO: Add Labels with the R2 values & Equation
 # TODO: Implement useLinear & useLogScale flag handling.
 getPlot <- function(clean_long_subset_data, plot_title="Plot Title", useLinear=TRUE, 
                     useLogScale=TRUE)
 {
+  if(COLORED_PLOTS)
+  {
+    plot <- ggplot(data=clean_long_subset_data, mapping = 
+                     aes(x=beginYr, y=log(value*CURRENCY_SCALE), col=variable,
+                         shape=variable))
+  }
+  else
+  {
+    plot <- ggplot(data=clean_long_subset_data, mapping = 
+                     aes(x=beginYr, y=log(value*CURRENCY_SCALE), shape=variable))
+  }
   
-  returnPlot <- ggplot(data=clean_long_subset_data, mapping = 
-                         aes(x=beginYr, y=log(value*scale), shape=variable))+
-    # Adding data points, trend line.
-    geom_point(size=2)+
-    geom_smooth(method='lm', color="black")+
-    # Adding Equations, R2
-    stat_regline_equation(label.y.npc=0.75, show.legend = FALSE)+
-    stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")))+
+  # Adding data points, trend line.
+  plot <- plot + geom_point(size=2) +
+    scale_y_continuous(name = "Natural Log (Absolute Rupee Amount)", 
+                       n.breaks = 10) +
+    scale_x_continuous(name = "Year", n.breaks = 10)
+    
+
+  if(COLORED_PLOTS)
+  {
+    plot <- plot + geom_smooth(method='lm')
+  }
+  else
+  {
+    plot <- plot + geom_smooth(method='lm', color="black")
+  }
+  
+  # Adding Equations, R2
+  # TODO: Dynamically set location of equations/R2
+  # TODO: Set Labels for equations/R2 (needed for B/W plots)
+  plot <- plot + 
+    stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
+             label.x.npc = 0, label.y.npc = 1) + 
+    stat_regline_equation(label.x.npc = 0, label.y.npc=0.75, 
+                          show.legend = FALSE) +
+    
     # Setting Labels/Titles/Theme etc.
-    ggtitle(plot_title)+
-    labs(x="Year", y="Natural Log (Absolute Rupee Amount)")+
-    theme_bw()+
+    ggtitle(plot_title) 
+    
+  if(!COLORED_PLOTS)
+  {
+    plot <- plot + theme_bw()
+  }
+  
+  plot <- plot +
     # theme(plot.title = element_text(hjust = 0.5, vjust=-8), #hjust:%, vjust:abs
-    theme(plot.title = element_text(hjust = 0.5),
+    theme(plot.title = element_text(hjust = 0.5, face = "bold", size = rel(1.8)),
+          axis.title = element_text(face = "bold", size = rel(1.5)),
+          # axis.
           legend.position = "bottom",
           legend.title = element_blank()) #Remove Legend Title
 
-  return(returnPlot)
+  return(plot)
 }
 
 
@@ -161,9 +200,14 @@ getAnalysis <- function(clean_long_subset_data, subset_name,
   # summary <- getSummary(cleaned_data, subset_name, useLinear, useLogScale)
   summary <- getSummary(clean_long_subset_data)
   plot <- getPlot(clean_long_subset_data, subset_name, useLinear, useLogScale)
+  if(PRINT_FLAG){
+    printSEP(PRINT_FLAG)
+    mess <- paste(COUNTER, ": Finished Summarizing  Data for:", subset_name)
+    printMSG(mess, PRINT_FLAG)
+    mess <- paste(COUNTER, ": Finished Plotting the Data for:", subset_name)
+    printMSG(mess, PRINT_FLAG)
+    # printSEP(PRINT_FLAG)
+  }
   # return (c(summary,plot))
-  return(list(summary, plot))
+  return(list(subset_name, summary, plot))
 }
-
-
-

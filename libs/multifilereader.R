@@ -1,34 +1,13 @@
 library(readxl)
 library(dplyr)
-
-# Utility to print status/log messages on console
-# Prints a separator to separate sections *********
-# Call with $doPrint$=TRUE to print (default FALSE)
-printSEP <- function(doPrint=FALSE)
-{
-  if(!doPrint) {
-    return(NULL)
-  }
-  print("---------------------------------------------------------------------")
-}
-
-# Utility to print status/log messages on console
-# Prints the message passed in $msg
-# Call with $doPrint$=TRUE to print (default FALSE)
-printMSG <- function(msg, doPrint=FALSE) 
-{
-  if(!doPrint) {
-    return(NULL)
-  }
-  print(msg)
-}
-
+source("./libs/utils.R")
+assign("consolidated_data", NULL, envir=.GlobalEnv)
 
 # Reads multiple time series files to return a single data frame
 # All the files stored in a single (common) directory 
 # Merges the files on the variable named Year
 # Returns dataframe
-# Default Settings (files downloaded from cmie website):
+# Default Settings (files downloaded from cmie):
 ### File Extension: '.xls'
 ### File Type: delimited
 ### Lines to Skip (metadata): 2
@@ -38,8 +17,10 @@ printMSG <- function(msg, doPrint=FALSE)
 multi_delim_reader <- function(filepath=".", extn=".xls", skiplines=2, 
                                printFlag=FALSE)
 {
-  printMSG("------------------------BEGIN READING FILES------------------------"
-           , printFlag)
+  printSEP(printFlag)
+  printMSG("BEGIN READING FILES", printFlag)
+  printSEP(printFlag)
+  
   list_of_files <- list.files(path=filepath, pattern=extn, all.files=TRUE,
                               full.names=TRUE)
   combined_data <- data.frame()
@@ -86,7 +67,23 @@ multi_delim_reader <- function(filepath=".", extn=".xls", skiplines=2,
     # invisible(readline(prompt="Press [enter] to continue"))
     # View(inFile)
   }
-  printMSG(paste("------------------------FINISHED READING FILES. READ", 
-                 a, "FILES------------------------"), printFlag)
+  printMSG(paste("FINISHED READING FILES. READ", a, "FILES"), printFlag)
+  write_column_names(colnames(combined_data))
+  printMSG("PRINTED LIST OF COLUMNS TO A TEXTFILE", printFlag)
+  printSEP(printFlag)
   return (combined_data)
+}
+
+
+write_column_names <- function(colNames, filename="./output/colNames.txt")
+{
+  a <- colnames(consolidated_data)
+  val <- paste("#", "Column Name", sep = "> ")
+  y <- c(val)
+  for(i in 1:length(colNames))
+  {
+    val <- paste(i, colNames[i], sep = "> ")
+    y <- c(y, val)  
+  }
+  writeLines(y, filename)
 }
