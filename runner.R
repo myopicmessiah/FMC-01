@@ -58,20 +58,20 @@ main <- function()
   printSEP(PRINT_FLAG)
   
   print_analysis(analysis_all)
-  
-  printSEP()
-  printMSG("PRINTED RESULTS TO FILE", PRINT_FLAG)
+
+  printMSG("PRINTED RESULTS TO FILES", PRINT_FLAG)
   printSEP(PRINT_FLAG)
-  
-  
 }
 
+# Prints the results of the analyses (tables & plots) to external files.
 # TODO: Write Analysis Results to PDF (1 summary & 1 Plot per page)
+# TODO: Move to analyzer.R?
 print_analysis <- function(analysis_all)
 {
   library(stargazer)
   i <- 1
   # for(i in 1:length(analysis_all))
+  # pdf(file="results.pdf")
   while(i<length(analysis_all))
   {
     subset_name <- analysis_all[[i]]
@@ -96,6 +96,7 @@ print_analysis <- function(analysis_all)
               out=sum_file)
     printMSG(paste("Saved Summary:", sum_file), PRINT_FLAG)
   }
+  # dev.off()
 }
 
 # Deprecated

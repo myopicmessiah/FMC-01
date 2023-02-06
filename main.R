@@ -8,3 +8,5 @@ COLORED_PLOTS=TRUE #Set as FALSE to get Black & White Plots
 # main_old()
 # Note: main() starts by clearing the console. 
 main()
+
+rm(list = ls()[! ls() %in% c("analysis_all", "filtered_data")])
