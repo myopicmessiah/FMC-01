@@ -1,4 +1,5 @@
-setwd("C:/Users/sharm/OneDrive - Indian Institute of Management/PhD/~Programming/github-repos/FMC-01")
+# set working directory (not needed if opening .Rproj file)
+# setwd("C:/Users/sharm/OneDrive - Indian Institute of Management/PhD/~Programming/github-repos/FMC-01")
 source("runner.R")
 
 PRINT_FLAG=FALSE    #Set as TRUE to display status messages/logs on console.
