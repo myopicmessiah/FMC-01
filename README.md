@@ -8,7 +8,14 @@ Instructions:
 		i.	Text file with column names for all tables read (useful for defining relevant columns).
 		ii. Plots for the tables analyzed (one PDF file per table).
 		iii. Descriptive stats/summary for tables analyzed (one TXT file per table).
-3.	Useful defaults used in main.R:
+3. Useful defaults used in main.R:
 	a. Set PRINT_FLAG = TRUE. To get status messages while execution.
 	b. Set COLORED_PLOTS = FALSE. To get B/W plots in the output PDFs.
 		
+Packages Used (Install if not present):
+1. library(ggplot2)
+2. library(ggpubr)
+3. library(reshape2)
+4. library(readxl)
+5. library(dplyr)
+6. library(stargazer)
